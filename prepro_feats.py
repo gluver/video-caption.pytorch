@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument("--gpu", dest='gpu', type=str, default='0',
                         help='Set CUDA_VISIBLE_DEVICES environment variable, optional')
     parser.add_argument("--output_dir", dest='output_dir', type=str,
-                        default='./video-caption.pytorch-master/data/feats/resnet152', help='directory to store features')
+                        default='./video-caption.pytorch/data/feats/resnet152', help='directory to store features')
     parser.add_argument("--n_frame_steps", dest='n_frame_steps', type=int, default=40,
                         help='how many frames to sampler per video')
 
