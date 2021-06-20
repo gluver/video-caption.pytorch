@@ -1,9 +1,10 @@
 import argparse
 
-
+#fit json into /media/credog/2202-0B9C/VideoCaptionData/cpation_dataset/Train/G_15000-G_17249/info.json
+#check out fc feats
 def parse_opt():
     parser = argparse.ArgumentParser()
-    # Data input settings
+    # Data input setting
     parser.add_argument(
         '--input_json',
         type=str,
@@ -13,7 +14,7 @@ def parse_opt():
         '--info_json',
         type=str,
         default='data/info.json',
-        help='path to the json file containing additional info and vocab')
+        help='path to the json file containing additional info and vocab')# 
     parser.add_argument(
         '--caption_json',
         type=str,
@@ -25,7 +26,7 @@ def parse_opt():
         nargs='*',
         type=str,
         default=['data/feats/resnet152/'],
-        help='path to the directory containing the preprocessed fc feats')
+        help='path to the directory containing the preprocessed fc feats')#
 
     parser.add_argument('--c3d_feats_dir', type=str, default='data/c3d_feats')
     parser.add_argument(
