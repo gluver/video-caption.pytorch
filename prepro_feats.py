@@ -74,7 +74,7 @@ if __name__ == '__main__':
                         help='how many frames to sampler per video')
 
     parser.add_argument("--video_path", dest='video_path', type=str,
-                        default='data/train-video', help='path to video dataset')
+                        default='../input/vcap-data-cctv-news/cpation_dataset/Train/G_15000-G_17249/video', help='path to video dataset')
     parser.add_argument("--model", dest="model", type=str, default='resnet152',
                         help='the CNN model you want to use to extract_feats')
     
