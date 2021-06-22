@@ -8,3 +8,10 @@
 - 如何生成模型评估指标
 - cocoscorer 如何使用
 - prepro_vocab,
+-生成预训练模型feature python prepro_feats.py --gpu 0 --output_dir data/feats/resnet152 --video_path /media/credog/2202-0B9C/VideoCaptionData/cpation_dataset/Train/G_15000-G_17249/video
+-python prepro_feats.py --gpu 0 --output_dir data/feats/resnet152 --video_path /media/credog/2202-0B9C/VideoCaptionData/cpation_dataset/Test/video
+-安装ffmpeg
+-data/input.json == 原数据集中的info.json
+-info.json 中只包含 train video 的  信息 ，无测试集合信息
+-UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+-python eval.py --recover_opt save/opt_info.json --saved_model save/model_3000.pth --batch_size 100 --gpu 0

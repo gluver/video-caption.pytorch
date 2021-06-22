@@ -8,7 +8,7 @@ def parse_opt():
     parser.add_argument(
         '--input_json',
         type=str,
-        default='data/videodatainfo_2017.json',
+        default='data/input.json',
         help='path to the json file containing video info')
     parser.add_argument(
         '--info_json',
@@ -138,7 +138,7 @@ def parse_opt():
     parser.add_argument(
         '--checkpoint_path',
         type=str,
-        default='save',
+        default='save1',
         help='directory to store checkpointed models')
 
     parser.add_argument(

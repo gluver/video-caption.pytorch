@@ -45,42 +45,45 @@ class VideoDataset(Dataset):
         """This function returns a tuple that is further passed to collate_fn
         """
         # which part of data to load
-        if self.mode == 'val':
-            ix += len(self.splits['train'])
-        elif self.mode == 'test':
-            ix = ix + len(self.splits['train']) + len(self.splits['val'])
+        # if self.mode == 'val':
+        #     ix += len(self.splits['train'])
+        # elif self.mode == 'test':
+        #     ix = ix + len(self.splits['train']) + len(self.splits['val'])
         
         fc_feat = []
         for dir in self.feats_dir:
-            fc_feat.append(np.load(os.path.join(dir, 'video%i.npy' % (ix))))
+            # fc_feat.append(np.load(os.path.join(dir, 'G_%i.npy' % (ix+15000))))
+            fc_feat.append(np.load(os.path.join(dir, 'G_%05i.npy' % (self.splits[self.mode][ix]))))
         fc_feat = np.concatenate(fc_feat, axis=1)
         if self.with_c3d == 1:
             c3d_feat = np.load(os.path.join(self.c3d_feats_dir, 'video%i.npy'%(ix)))
             c3d_feat = np.mean(c3d_feat, axis=0, keepdims=True)
             fc_feat = np.concatenate((fc_feat, np.tile(c3d_feat, (fc_feat.shape[0], 1))), axis=1)
-        label = np.zeros(self.max_len)
-        mask = np.zeros(self.max_len)
-        captions = self.captions['video%i'%(ix)]['final_captions']
-        gts = np.zeros((len(captions), self.max_len))
-        for i, cap in enumerate(captions):
-            if len(cap) > self.max_len:
-                cap = cap[:self.max_len]
-                cap[-1] = '<eos>'
-            for j, w in enumerate(cap):
-                gts[i, j] = self.word_to_ix[w]
-
-        # random select a caption for this video
-        cap_ix = random.randint(0, len(captions) - 1)
-        label = gts[cap_ix]
-        non_zero = (label == 0).nonzero()
-        mask[:int(non_zero[0][0]) + 1] = 1
-
         data = {}
+        if self.mode=='train':
+            label = np.zeros(self.max_len)
+            mask = np.zeros(self.max_len)
+            captions = self.captions['G_%05i' % (ix+15000)]['final_captions']
+            gts = np.zeros((len(captions), self.max_len))
+            for i, cap in enumerate(captions):
+                if len(cap) > self.max_len:
+                    cap = cap[:self.max_len]
+                    cap[-1] = '<eos>'
+                for j, w in enumerate(cap):
+                    gts[i, j] = self.word_to_ix[w]
+
+            # random select a caption for this video
+            cap_ix = random.randint(0, len(captions) - 1)
+            label = gts[cap_ix]
+            non_zero = (label == 0).nonzero()
+            mask[:int(non_zero[0][0]) + 1] = 1
+            data['labels'] = torch.from_numpy(label).type(torch.LongTensor)
+            data['masks'] = torch.from_numpy(mask).type(torch.FloatTensor)
+            data['gts'] = torch.from_numpy(gts).long()
+        
         data['fc_feats'] = torch.from_numpy(fc_feat).type(torch.FloatTensor)
-        data['labels'] = torch.from_numpy(label).type(torch.LongTensor)
-        data['masks'] = torch.from_numpy(mask).type(torch.FloatTensor)
-        data['gts'] = torch.from_numpy(gts).long()
-        data['video_ids'] = 'video%i'%(ix)
+        data['video_ids'] = 'G_%05i' % (self.splits[self.mode][ix])
+        print(data['video_ids'],data)
         return data
 
     def __len__(self):

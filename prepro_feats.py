@@ -45,7 +45,6 @@ def extract_feats(params, model, load_image_fn):
         video_id = video.split("/")[-1].split(".")[0]
         dst = params['model'] + '_' + video_id
         extract_frames(video, dst)
-
         image_list = sorted(glob.glob(os.path.join(dst, '*.jpg')))
         samples = np.round(np.linspace(
             0, len(image_list) - 1, params['n_frame_steps']))
@@ -55,7 +54,10 @@ def extract_feats(params, model, load_image_fn):
             img = load_image_fn(image_list[iImg])
             images[iImg] = img
         with torch.no_grad():
-            fc_feats = model(images.cuda()).squeeze()
+            if params['gpu']=='-1':#only working on cpu
+                fc_feats = model(images).squeeze()
+            else:
+                fc_feats = model(images.cuda()).squeeze()
         img_feats = fc_feats.cpu().numpy()
         # Save the inception features
         outfile = os.path.join(dir_fc, video_id + '.npy')
@@ -67,7 +69,7 @@ def extract_feats(params, model, load_image_fn):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     '''kaggle notebook data folder ./video-caption.pytorch-master/data'''
-    parser.add_argument("--gpu", dest='gpu', type=str, default='0',
+    parser.add_argument("--gpu", dest='gpu', type=str, default='0',#-1 no cpu
                         help='Set CUDA_VISIBLE_DEVICES environment variable, optional')
     parser.add_argument("--output_dir", dest='output_dir', type=str,
                         default='./video-caption.pytorch/data/feats/resnet152', help='directory to store features')
@@ -80,7 +82,8 @@ if __name__ == '__main__':
                         help='the CNN model you want to use to extract_feats')
     
     args = parser.parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    if args.gpu!='-1':
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     params = vars(args)
     if params['model'] == 'inception_v3':
         C, H, W = 3, 299, 299
@@ -103,6 +106,6 @@ if __name__ == '__main__':
 
     model.last_linear = utils.Identity()
     model = nn.DataParallel(model)
-    
-    model = model.cuda()
+    if args.gpu!='-1':
+        model = model.cuda()
     extract_feats(params, model, load_image_fn)

@@ -1,8 +1,9 @@
+from posix import listdir
 import re
 import json
 import argparse
 import numpy as np
-
+import os
 
 def build_vocab(vids, params):
     count_thr = params['word_count_threshold']
@@ -62,6 +63,8 @@ def main(params):
     videos = json.load(open(params['input_json'], 'r'))['videos']
     for i in videos:
         out['videos'][i['split']].append(int(i['id']))
+    for file in os.listdir(params['test_dir']) :
+        out['videos']['test'].append(int(re.findall('\d+',file)[0]))
     json.dump(out, open(params['info_json'], 'w'))
     json.dump(video_caption, open(params['caption_json'], 'w'))
 
@@ -70,13 +73,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # input json
-    parser.add_argument('--input_json', type=str, default='data/videodatainfo_2017.json',
+    parser.add_argument('--input_json', type=str, default='data/input.json',
                         help='msr_vtt videoinfo json')
     parser.add_argument('--info_json', default='data/info.json',
                         help='info about iw2word and word2ix')
     parser.add_argument('--caption_json', default='data/caption.json', help='caption json file')
 
-
+    parser.add_argument('--test_dir',default='/media/credog/2202-0B9C/VideoCaptionData/cpation_dataset/Test/video',help='test dataset directory')
     parser.add_argument('--word_count_threshold', default=1, type=int,
                         help='only words that occur more than this number of times will be put in vocab')
 

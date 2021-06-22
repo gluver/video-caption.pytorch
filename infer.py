@@ -12,34 +12,16 @@ from misc.cocoeval import suppress_stdout_stderr, COCOScorer
 
 from pandas.io.json import json_normalize
 
-
-def convert_data_to_coco_scorer_format(data_frame):
-    gts = {}
-    for row in zip(data_frame["caption"], data_frame["video_id"]):
-        if row[1] in gts:
-            gts[row[1]].append(
-                {'image_id': row[1], 'cap_id': len(gts[row[1]]), 'caption': row[0]})
-        else:
-            gts[row[1]] = []
-            gts[row[1]].append(
-                {'image_id': row[1], 'cap_id': len(gts[row[1]]), 'caption': row[0]})
-    return gts
-
-
-def test(model, crit, dataset, vocab, opt):
+def infer(model, dataset, vocab, opt):
     model.eval()
-    loader = DataLoader(dataset, batch_size=opt["batch_size"], shuffle=True)
-    scorer = COCOScorer()
-    gt_dataframe = json_normalize(
-        json.load(open(opt["input_json"]))['sentences'])
-    gts = convert_data_to_coco_scorer_format(gt_dataframe)
-    results = []
+    loader = DataLoader(dataset, batch_size=opt["batch_size"], shuffle=False)
+    results = {}
     samples = {}
     for data in loader:
         # forward the model to get loss
         fc_feats = data['fc_feats'].cuda()
-        labels = data['labels'].cuda()
-        masks = data['masks'].cuda()
+        # labels = data['labels'].cuda()
+        # masks = data['masks'].cuda()
         video_ids = data['video_ids']
       
         # forward the model to also get generated samples for each image
@@ -52,25 +34,19 @@ def test(model, crit, dataset, vocab, opt):
         for k, sent in enumerate(sents):
             video_id = video_ids[k]
             samples[video_id] = [{'image_id': video_id, 'caption': sent}]
-
-    with suppress_stdout_stderr():
-        valid_score = scorer.score(gts, samples, samples.keys())
-    results.append(valid_score)
-    print(valid_score)
-
+        #sort the elements in predicted results
+    samples_key_sorted=sorted(samples.keys())
+    samples_sorted={}
+    for key in samples_key_sorted:
+        samples_sorted[key]=samples[key]
     if not os.path.exists(opt["results_path"]):
         os.makedirs(opt["results_path"])
-
-    with open(os.path.join(opt["results_path"], "scores.txt"), 'a') as scores_table:
-        scores_table.write(json.dumps(results[0]) + "\n")
     with open(os.path.join(opt["results_path"],
                            opt["model"].split("/")[-1].split('.')[0] + ".json"), 'w') as prediction_results:
-        json.dump({"predictions": samples, "scores": valid_score},
+        json.dump({"predictions": samples_sorted},
                   prediction_results)
-
-
 def main(opt):
-    dataset = VideoDataset(opt, "train")
+    dataset = VideoDataset(opt, "test")
     opt["vocab_size"] = dataset.get_vocab_size()
     opt["seq_length"] = dataset.max_len
     if opt["model"] == 'S2VTModel':
@@ -86,10 +62,7 @@ def main(opt):
     #model = nn.DataParallel(model)
     # Setup the model
     model.load_state_dict(torch.load(opt["saved_model"]))
-    crit = utils.LanguageModelCriterion()
-
-    test(model, crit, dataset, dataset.get_vocab(), opt)
-
+    infer(model, dataset, dataset.get_vocab(), opt)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
